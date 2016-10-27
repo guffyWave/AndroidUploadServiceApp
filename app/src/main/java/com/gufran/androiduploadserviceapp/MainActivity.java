@@ -13,13 +13,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import net.gotev.uploadservice.MultipartUploadRequest;
-import net.gotev.uploadservice.ServerResponse;
-import net.gotev.uploadservice.UploadInfo;
-import net.gotev.uploadservice.UploadNotificationConfig;
-import net.gotev.uploadservice.UploadService;
-import net.gotev.uploadservice.UploadServiceBroadcastReceiver;
-import net.gotev.uploadservice.UploadStatusDelegate;
+import com.gufran.androiduploadserviceapp.uploadservice.MultipartUploadRequest;
+import com.gufran.androiduploadserviceapp.uploadservice.ServerResponse;
+import com.gufran.androiduploadserviceapp.uploadservice.UploadInfo;
+import com.gufran.androiduploadserviceapp.uploadservice.UploadNotificationConfig;
+import com.gufran.androiduploadserviceapp.uploadservice.UploadStatusDelegate;
 
 import java.io.File;
 import java.io.FileNotFoundException;

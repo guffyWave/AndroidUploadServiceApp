@@ -4,11 +4,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.gufran.androiduploadserviceapp.AndroidUploadServiceApp;
+import com.gufran.androiduploadserviceapp.ImageUploadTask;
 import com.gufran.androiduploadserviceapp.persistence.ImageUploadDBHelper;
-
-import net.gotev.uploadservice.ServerResponse;
-import net.gotev.uploadservice.UploadInfo;
-import net.gotev.uploadservice.UploadServiceBroadcastReceiver;
+import com.gufran.androiduploadserviceapp.uploadservice.ServerResponse;
+import com.gufran.androiduploadserviceapp.uploadservice.UploadInfo;
+import com.gufran.androiduploadserviceapp.uploadservice.UploadServiceBroadcastReceiver;
 
 import org.json.JSONObject;
 
@@ -16,13 +17,10 @@ import org.json.JSONObject;
  * Created by gufran on 10/26/16.
  */
 
-public class MyReciever extends UploadServiceBroadcastReceiver {
-
+public class UploadStatusBroadcastReceiver extends UploadServiceBroadcastReceiver {
 
     private ImageUploadDBHelper imageUploadDBHelper;
-
     Context context;
-    String TAG = "GUFRAN";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -33,47 +31,30 @@ public class MyReciever extends UploadServiceBroadcastReceiver {
 
     @Override
     public void onProgress(UploadInfo uploadInfo) {
-        // your code here
         //  Log.d(TAG, "onProgress " + uploadInfo.getUploadId() + "  " + uploadInfo.getProgressPercent() + " %");
     }
 
     @Override
     public void onCancelled(UploadInfo uploadInfo) {
-        // your code here
-        Log.d(TAG, uploadInfo.getUploadId() + "   onCancelled");
-
-        imageUploadDBHelper.updateImageUploadStatus(uploadInfo.getUploadId(), "CANCELLED");
+        Log.d(AndroidUploadServiceApp.TAG, uploadInfo.getUploadId() + "   onCancelled");
+        imageUploadDBHelper.updateImageUploadStatus(uploadInfo.getUploadId(), ImageUploadTask.UploadStatus.CANCELLED);
     }
 
     @Override
     public void onError(UploadInfo uploadInfo, Exception exception) {
-        // Context context = getReceiverContext();
-        // your code here
-        Log.d(TAG, uploadInfo.getUploadId() + "   onError");
-
-        imageUploadDBHelper.updateImageUploadStatus(uploadInfo.getUploadId(), "ERROR");
+        Log.d(AndroidUploadServiceApp.TAG, uploadInfo.getUploadId() + "   onError");
+        imageUploadDBHelper.updateImageUploadStatus(uploadInfo.getUploadId(), ImageUploadTask.UploadStatus.ERROR);
     }
 
     @Override
     public void onCompleted(UploadInfo uploadInfo, ServerResponse serverResponse) {
-
-        // your code here
-        Log.d(TAG, "File Uploaded" + uploadInfo.getUploadId());
-        // Toast.makeText(context, "File Uploaded " + uploadInfo.getUploadId(), Toast.LENGTH_LONG).show();
-
-        imageUploadDBHelper.updateImageUploadStatus(uploadInfo.getUploadId(), "UPLOADED");
-
-
+        Log.d(AndroidUploadServiceApp.TAG, "File Uploaded" + uploadInfo.getUploadId());
+        imageUploadDBHelper.updateImageUploadStatus(uploadInfo.getUploadId(), ImageUploadTask.UploadStatus.SUCCESS);
         try {
             String response = new String(serverResponse.getBody());
-
-            // Log.d(TAG, "Server Response " + response);
-
             JSONObject jsonObject = new JSONObject(response);
             String fileURL = jsonObject.getString("file_url");
-
             imageUploadDBHelper.updateImageUploadServerURL(uploadInfo.getUploadId(), fileURL);
-
         } catch (Exception e) {
             e.printStackTrace();
         }

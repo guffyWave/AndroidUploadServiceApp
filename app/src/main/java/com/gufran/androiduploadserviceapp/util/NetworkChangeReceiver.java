@@ -17,8 +17,7 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
         ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo wifi = connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         NetworkInfo mobile = connMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-
-
+        
         /// check for if mobile data is selected or not
 
         boolean isConnected = wifi != null && wifi.isConnectedOrConnecting() ||

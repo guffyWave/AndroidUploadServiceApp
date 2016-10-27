@@ -7,6 +7,12 @@ import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.gufran.androiduploadserviceapp.ImageUploadTask;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by gufran on 10/26/16.
  */
@@ -41,15 +47,15 @@ public class ImageUploadDBHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public boolean insertImageUpload(String uploadId, String filepath, String uploadStatus, String fileStatus, String serverURL) {
+    public boolean insertImageUpload(String uploadId, String filepath, ImageUploadTask.UploadStatus uploadStatus, ImageUploadTask.FileStatus fileStatus, String serverURL) {
         SQLiteDatabase db = this.getWritableDatabase();
         try {
             db.beginTransaction();
             ContentValues contentValues = new ContentValues();
             contentValues.put(IMAGE_UPLOAD_COLUMN_UPLOAD_ID, uploadId);
             contentValues.put(IMAGE_UPLOAD_COLUMN_FILE_PATH, filepath);
-            contentValues.put(IMAGE_UPLOAD_COLUMN_UPLOAD_STATUS, uploadStatus);
-            contentValues.put(IMAGE_UPLOAD_COLUMN_FILE_STATUS, fileStatus);
+            contentValues.put(IMAGE_UPLOAD_COLUMN_UPLOAD_STATUS, uploadStatus.toString());
+            contentValues.put(IMAGE_UPLOAD_COLUMN_FILE_STATUS, fileStatus.toString());
             contentValues.put(IMAGE_UPLOAD_COLUMN_SERVER_URL, serverURL);
             db.insert(IMAGE_UPLOAD_TABLE_NAME, null, contentValues);
             db.setTransactionSuccessful();
@@ -62,15 +68,46 @@ public class ImageUploadDBHelper extends SQLiteOpenHelper {
         return true;
     }
 
-    public Cursor getImageUpload(int id) {
+    public List<ImageUploadTask> getAllImageUpload() {
+        ArrayList<ImageUploadTask> taskList = new ArrayList<ImageUploadTask>();
+
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res = db.rawQuery("select * from " + IMAGE_UPLOAD_TABLE_NAME + " where id=" + id + "", null);
-        return res;
+        Cursor cursor = db.rawQuery("select * from " + IMAGE_UPLOAD_TABLE_NAME, null);
+        prepareTaskList(taskList, cursor);
+        return taskList;
+    }
+
+
+    public List<ImageUploadTask> getImageUpload(int id) {
+        ArrayList<ImageUploadTask> taskList = new ArrayList<ImageUploadTask>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("select * from " + IMAGE_UPLOAD_TABLE_NAME + " where " + IMAGE_UPLOAD_COLUMN_ID + "=" + id + "", null);
+        prepareTaskList(taskList, cursor);
+        return taskList;
+    }
+
+    public List<ImageUploadTask> getImageUpload(ImageUploadTask.UploadStatus... uploadStatusArr) {
+        ArrayList<ImageUploadTask> taskList = new ArrayList<ImageUploadTask>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String query = "select * from " + IMAGE_UPLOAD_TABLE_NAME + " where ";
+
+        for (int i = 0; i < uploadStatusArr.length; i++) {
+            ImageUploadTask.UploadStatus uploadStatus = uploadStatusArr[i];
+            query = query + IMAGE_UPLOAD_COLUMN_UPLOAD_STATUS + "=" + uploadStatus.toString() ;
+            if (i != uploadStatusArr.length - 1)
+                query = query + " OR ";
+        }
+
+        Cursor cursor = db.rawQuery(query, null);
+
+        prepareTaskList(taskList, cursor);
+        return taskList;
     }
 
     public Cursor getImageUpload(String uploadId) {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res = db.rawQuery("select * from " + IMAGE_UPLOAD_TABLE_NAME + " where " + IMAGE_UPLOAD_COLUMN_UPLOAD_ID + "=" + uploadId + "", null);
+        Cursor res = db.rawQuery("select * from " + IMAGE_UPLOAD_TABLE_NAME + " where " + IMAGE_UPLOAD_COLUMN_UPLOAD_ID + "=?;", new String[]{uploadId});
         return res;
     }
 
@@ -80,15 +117,15 @@ public class ImageUploadDBHelper extends SQLiteOpenHelper {
         return numRows;
     }
 
-    public boolean updateImageUpload(Integer id, String uploadId, String filepath, String uploadStatus, String fileStatus, String serverURL) {
+    public boolean updateImageUpload(Integer id, String uploadId, String filepath, ImageUploadTask.UploadStatus uploadStatus, ImageUploadTask.FileStatus fileStatus, String serverURL) {
         SQLiteDatabase db = this.getWritableDatabase();
         try {
             db.beginTransaction();
             ContentValues contentValues = new ContentValues();
             contentValues.put(IMAGE_UPLOAD_COLUMN_UPLOAD_ID, uploadId);
             contentValues.put(IMAGE_UPLOAD_COLUMN_FILE_PATH, filepath);
-            contentValues.put(IMAGE_UPLOAD_COLUMN_UPLOAD_STATUS, uploadStatus);
-            contentValues.put(IMAGE_UPLOAD_COLUMN_FILE_STATUS, fileStatus);
+            contentValues.put(IMAGE_UPLOAD_COLUMN_UPLOAD_STATUS, uploadStatus.toString());
+            contentValues.put(IMAGE_UPLOAD_COLUMN_FILE_STATUS, fileStatus.toString());
             contentValues.put(IMAGE_UPLOAD_COLUMN_SERVER_URL, serverURL);
             db.update(IMAGE_UPLOAD_TABLE_NAME, contentValues, "id = ? ", new String[]{Integer.toString(id)});
             db.setTransactionSuccessful();
@@ -100,12 +137,12 @@ public class ImageUploadDBHelper extends SQLiteOpenHelper {
         return true;
     }
 
-    public boolean updateImageUploadStatus(String uploadId, String uploadStatus) {
+    public boolean updateImageUploadStatus(String uploadId, ImageUploadTask.UploadStatus uploadStatus) {
         SQLiteDatabase db = this.getWritableDatabase();
         try {
             db.beginTransaction();
             ContentValues contentValues = new ContentValues();
-            contentValues.put(IMAGE_UPLOAD_COLUMN_UPLOAD_STATUS, uploadStatus);
+            contentValues.put(IMAGE_UPLOAD_COLUMN_UPLOAD_STATUS, uploadStatus.toString());
             db.update(IMAGE_UPLOAD_TABLE_NAME, contentValues, IMAGE_UPLOAD_COLUMN_UPLOAD_ID + " = ? ", new String[]{uploadId});
             db.setTransactionSuccessful();
         } catch (Exception e) {
@@ -168,10 +205,42 @@ public class ImageUploadDBHelper extends SQLiteOpenHelper {
         return 0;
     }
 
-    public Cursor getAllImageUpload() {
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res = db.rawQuery("select * from " + IMAGE_UPLOAD_TABLE_NAME, null);
-        return res;
+    private void prepareTaskList(ArrayList<ImageUploadTask> taskList, Cursor cursor) {
+        cursor.moveToFirst();
+        while (cursor.isAfterLast() == false) {
+            ImageUploadTask imageUploadTask = new ImageUploadTask();
+            imageUploadTask.setFile(new File(cursor.getString(cursor.getColumnIndex(IMAGE_UPLOAD_COLUMN_FILE_PATH))));
+            imageUploadTask.setUploadID(cursor.getString(cursor.getColumnIndex(IMAGE_UPLOAD_COLUMN_UPLOAD_ID)));
+            imageUploadTask.setUploadStatus(convertUploadStatus(cursor.getString(cursor.getColumnIndex(IMAGE_UPLOAD_COLUMN_UPLOAD_STATUS))));
+            imageUploadTask.setUploadServerURL(cursor.getString(cursor.getColumnIndex(IMAGE_UPLOAD_COLUMN_SERVER_URL)));
+            imageUploadTask.setFileStatus(convertFileStatus(cursor.getString(cursor.getColumnIndex(IMAGE_UPLOAD_COLUMN_FILE_STATUS))));
+            taskList.add(imageUploadTask);
+            cursor.moveToNext();
+        }
+    }
+
+    private ImageUploadTask.UploadStatus convertUploadStatus(String uploadStatus) {
+        if (uploadStatus.equals(ImageUploadTask.UploadStatus.IDLE.toString())) {
+            return ImageUploadTask.UploadStatus.IDLE;
+        } else if (uploadStatus.equals(ImageUploadTask.UploadStatus.CANCELLED.toString())) {
+            return ImageUploadTask.UploadStatus.CANCELLED;
+        } else if (uploadStatus.equals(ImageUploadTask.UploadStatus.ERROR.toString())) {
+            return ImageUploadTask.UploadStatus.ERROR;
+        } else if (uploadStatus.equals(ImageUploadTask.UploadStatus.IN_PROGRESS.toString())) {
+            return ImageUploadTask.UploadStatus.IN_PROGRESS;
+        } else if (uploadStatus.equals(ImageUploadTask.UploadStatus.SUCCESS.toString())) {
+            return ImageUploadTask.UploadStatus.SUCCESS;
+        } else {
+            return ImageUploadTask.UploadStatus.FAILED;
+        }
+    }
+
+    private ImageUploadTask.FileStatus convertFileStatus(String fileStatus) {
+        if (fileStatus.equals(ImageUploadTask.FileStatus.EXISTS.toString())) {
+            return ImageUploadTask.FileStatus.EXISTS;
+        } else {
+            return ImageUploadTask.FileStatus.DELETED;
+        }
     }
 
 

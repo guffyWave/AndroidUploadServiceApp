@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:name=".AndroidUploadServiceApp"
@@ -25,7 +26,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".util.MyReciever">
+        <receiver android:name=".util.UploadStatusBroadcastReceiver">
             <intent-filter>
                 <action android:name="com.gufran.androiduploadserviceapp.uploadservice.broadcast.status" />
             </intent-filter>
@@ -37,6 +38,13 @@
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
+
+
+        <service
+            android:name=".uploadservice.UploadService"
+            android:enabled="true"
+            android:exported="true"></service>
+
 
     </application>
 
