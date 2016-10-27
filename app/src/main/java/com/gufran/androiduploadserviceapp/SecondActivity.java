@@ -1,6 +1,5 @@
 package com.gufran.androiduploadserviceapp;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
@@ -8,18 +7,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import com.gufran.androiduploadserviceapp.persistence.ImageUploadDBHelper;
-import com.gufran.androiduploadserviceapp.uploadservice.MultipartUploadRequest;
-import com.gufran.androiduploadserviceapp.uploadservice.UploadNotificationConfig;
-
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.net.MalformedURLException;
 import java.util.List;
 
 public class SecondActivity extends AppCompatActivity {
 
-    String[] fileNameArray = {"two.jpg", "one.jpg", "three.jpg", "four.jpg"};
+    String[] fileNameArray = {"two.jpg", "one.jpg", "three.jpg", "four.jpg", "six.jpg"};
     ImageUploadManager imageUploadManager;
 
     @Override

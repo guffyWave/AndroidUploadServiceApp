@@ -94,7 +94,7 @@ public class ImageUploadDBHelper extends SQLiteOpenHelper {
 
         for (int i = 0; i < uploadStatusArr.length; i++) {
             ImageUploadTask.UploadStatus uploadStatus = uploadStatusArr[i];
-            query = query + IMAGE_UPLOAD_COLUMN_UPLOAD_STATUS + "=" + uploadStatus.toString() ;
+            query = query + IMAGE_UPLOAD_COLUMN_UPLOAD_STATUS + "='" + uploadStatus.toString() + "'";
             if (i != uploadStatusArr.length - 1)
                 query = query + " OR ";
         }

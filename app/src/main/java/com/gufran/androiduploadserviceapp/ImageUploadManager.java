@@ -7,6 +7,7 @@ import android.util.Log;
 import com.gufran.androiduploadserviceapp.persistence.ImageUploadDBHelper;
 import com.gufran.androiduploadserviceapp.uploadservice.MultipartUploadRequest;
 import com.gufran.androiduploadserviceapp.uploadservice.UploadNotificationConfig;
+import com.gufran.androiduploadserviceapp.uploadservice.UploadService;
 
 import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
@@ -51,11 +52,30 @@ public class ImageUploadManager implements ImageUploadWorker {
         } catch (MalformedURLException exc) {
             Log.e(AndroidUploadServiceApp.TAG, exc.getMessage());
         }
-
     }
 
     @Override
     public void forceSync() {
+        Log.e(AndroidUploadServiceApp.TAG, "Force Sync Started --->> ");
+
+        // get FAILED ImageUploadTask from DB
+        List<ImageUploadTask> failedTaskList = getFailedTask();
+        // remove/stop  FILEUpload Objects from AndroidUploadService
+        // delete ImageUploadTask from DB
+        for (ImageUploadTask failedTask :
+                failedTaskList) {
+            UploadService.stopUpload(failedTask.getUploadID());
+            imageUploadDBHelper.deleteImageUpload(failedTask.getUploadID());
+
+            try {
+                //enqueue
+                enqueueTask(failedTask);
+            } catch (FileNotFoundException exc) {
+                Log.e(AndroidUploadServiceApp.TAG, exc.getMessage());
+            }
+        }
+
+        Log.e(AndroidUploadServiceApp.TAG, "Force Sync STOPPED --->> ");
 
     }
 
@@ -65,8 +85,7 @@ public class ImageUploadManager implements ImageUploadWorker {
     }
 
     public List<ImageUploadTask> getFailedTask() {
-        List<ImageUploadTask> taskList = imageUploadDBHelper.getImageUpload(ImageUploadTask.UploadStatus.ERROR, ImageUploadTask.UploadStatus.FAILED, ImageUploadTask.UploadStatus.CANCELLED, ImageUploadTask.UploadStatus.IDLE);
-        return taskList;
+        return imageUploadDBHelper.getImageUpload(ImageUploadTask.UploadStatus.ERROR, ImageUploadTask.UploadStatus.FAILED, ImageUploadTask.UploadStatus.CANCELLED, ImageUploadTask.UploadStatus.IDLE, ImageUploadTask.UploadStatus.IN_PROGRESS);
     }
     // get FAILED ImageUploadTask from DB
     // delete  FILEUpload Objects from AndroidUploadService
